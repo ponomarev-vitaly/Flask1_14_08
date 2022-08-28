@@ -8,8 +8,9 @@ BASE_DIR = Path(__file__).parent
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("://", "ql://", 1) \
-                                        or f"sqlite:///{BASE_DIR / 'main.db'}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL').replace("://", "ql://", 1) if os.environ.get(
+    'DATABASE_URL') else None \
+                         or f"sqlite:///{BASE_DIR / 'main.db'}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -48,15 +49,34 @@ class QuoteModel(db.Model):
         }
 
 
+@app.errorhandler(404)
+def not_found(e):
+    response = {'status': 404, 'error': 'not found'}
+    return response, 404
+
+
+def get_object_or_404(model, object_id):
+    object = model.query.get(object_id)
+    if object is None:
+        abort(404, f"Author with id={object_id} not found")
+    return object
+
+
 # Resource: Author
 @app.route("/authors")
 def get_authors():
-    pass
+    authors = AuthorModel.query.all()
+    authors_dict = []
+    for author in authors:
+        authors_dict.append(author.to_dict())
+    return authors_dict
 
 
 @app.route("/authors/<int:author_id>")
 def get_author_by_id(author_id):
-    pass
+    author = get_object_or_404(AuthorModel, author_id)
+    print("!!!")
+    return author.to_dict(), 200
 
 
 @app.route("/authors", methods=["POST"])
