@@ -5,3 +5,8 @@
 3. pip install -r requirements.txt
 4. flask db upgrade
 5. python app.py
+
+# Миграции
+
+1. flask db migrate -m "...."
+2. flask db upgrade
