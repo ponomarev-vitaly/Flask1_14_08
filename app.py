@@ -3,6 +3,7 @@ from flask import Flask, abort, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from pathlib import Path
+from sqlalchemy.exc import IntegrityError
 
 BASE_DIR = Path(__file__).parent
 
@@ -51,14 +52,14 @@ class QuoteModel(db.Model):
 
 @app.errorhandler(404)
 def not_found(e):
-    response = {'status': 404, 'error': 'not found'}
+    response = {'status': 404, 'error': e.description}
     return response, 404
 
 
-def get_object_or_404(model, object_id):
+def get_object_or_404(model: db.Model, object_id):
     object = model.query.get(object_id)
     if object is None:
-        abort(404, f"Author with id={object_id} not found")
+        abort(404, description=f"Author with id={object_id} not found")
     return object
 
 
@@ -84,7 +85,11 @@ def create_author():
     author_data = request.json
     author = AuthorModel(author_data["name"])
     db.session.add(author)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        return f"Author name must be unique", 400
     return author.to_dict(), 201
 
 
