@@ -31,7 +31,8 @@ class AuthorModel(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "name": self.name
+            "name": self.name,
+            "surname": self.surname,
         }
 
 
@@ -85,7 +86,8 @@ def get_author_by_id(author_id):
 @app.route("/authors", methods=["POST"])
 def create_author():
     author_data = request.json
-    author = AuthorModel(author_data["name"])
+    # author = AuthorModel(author_data["name"], author_data["surname"], ...)
+    author = AuthorModel(**author_data)
     db.session.add(author)
     try:
         db.session.commit()
